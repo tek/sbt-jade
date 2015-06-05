@@ -26,7 +26,7 @@ object SbtJade extends AutoPlugin {
 
   val name = "jade"
 
-  val jadeCompileTask = Def.task {
+  lazy val jadeTask = Def.task {
     val sourceDir = (sourceDirectory in Assets).value
     val targetDir = (resourceManaged in jade in Assets).value
     val sources = (sourceDir ** ((includeFilter in jade in Assets).value --
@@ -43,7 +43,7 @@ object SbtJade extends AutoPlugin {
           targetDir / f.toString.replaceFirst("\\.jade$", ".html")
         } map { f ⇒
           (f, config.renderTemplate(config.getTemplate(src.toString), model))
-          } map { case (f, html) ⇒
+        } map { case (f, html) ⇒
           IO.write(f, html)
           f
         }
@@ -60,19 +60,20 @@ object SbtJade extends AutoPlugin {
     if(targets.length > 0)
       streams.value.log.info(
         s"$name compilation results: ${targets.mkString(", ")}")
-    targets
+    results._1.toSeq
   }
 
   val baseSbtJadeSettings = Seq(
-    excludeFilter in jade := HiddenFileFilter || "_*",
+    excludeFilter in jade := HiddenFileFilter,
     includeFilter in jade := s"*.$name",
     managedResourceDirectories += (resourceManaged in jade in Assets).value,
     resourceManaged in jade in Assets := webTarget.value / name / "main",
     resourceGenerators in Assets <+= jade in Assets,
     jade in Assets :=
-      jadeCompileTask.dependsOn(WebKeys.webModules in Assets).value
+      jadeTask.dependsOn(WebKeys.webModules in Assets).value
   )
 
-  override def projectSettings: Seq[Setting[_]] =
+  override def projectSettings =
+    Seq(jade := (jade in Assets).value) ++
     inConfig(Assets)(baseSbtJadeSettings)
 }
