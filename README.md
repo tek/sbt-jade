@@ -8,7 +8,7 @@ Simple syntax-only jade asset plugin for sbt-web that uses [jade4j][1].
 resolvers += Resolver.url("bintray-tek-sbt-plugins",
   url("http://dl.bintray.com/tek/sbt-plugins"))(Resolver.ivyStylePatterns)
 
-addSbtPlugin("tryp.sbt" % "sbt-jade" % "0.0.1")
+addSbtPlugin("tryp.sbt" % "sbt-jade" % "0.0.2")
 ```
 
 jade files in the asset dir will be processed to html in staging.
