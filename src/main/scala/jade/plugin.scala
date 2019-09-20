@@ -40,7 +40,7 @@ object SbtJade extends AutoPlugin {
         streams.value.log.info(s"Processing ${srcs.size} $name source(s)")
       val targets = srcs map { src ⇒
         src.relativeTo(sourceDir) map { f ⇒
-          targetDir / f.toString.replaceFirst("\\.jade$", ".html")
+          targetDir / f.toString.replaceFirst("\\.jade$|\\.pug$", ".html")
         } map { f ⇒
           (f, config.renderTemplate(config.getTemplate(src.toString), model))
         } map { case (f, html) ⇒
@@ -65,10 +65,10 @@ object SbtJade extends AutoPlugin {
 
   val baseSbtJadeSettings = Seq(
     excludeFilter in jade := HiddenFileFilter,
-    includeFilter in jade := s"*.$name",
+    includeFilter in jade := s"*.jade" | "*.pug",
     managedResourceDirectories += (resourceManaged in jade in Assets).value,
     resourceManaged in jade in Assets := webTarget.value / name / "main",
-    resourceGenerators in Assets <+= jade in Assets,
+    resourceGenerators in Assets += jade in Assets,
     jade in Assets :=
       jadeTask.dependsOn(WebKeys.webModules in Assets).value
   )
