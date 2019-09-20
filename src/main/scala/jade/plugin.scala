@@ -11,6 +11,9 @@ import de.neuland.jade4j._
 
 object Import {
   val jade = TaskKey[Seq[File]]("jade", "Generate html files from jade")
+
+  val jadePrettyPrint = settingKey[Boolean]("Produces compressed HTML without unneeded whitespace if false.")
+
 }
 
 object SbtJade extends AutoPlugin {
@@ -33,7 +36,7 @@ object SbtJade extends AutoPlugin {
       (excludeFilter in jade in Assets).value)).get
     val config = new JadeConfiguration
     val model = new java.util.HashMap[String, Object]
-    config.setPrettyPrint(true)
+    config.setPrettyPrint(jadePrettyPrint.value)
     val results = incremental.syncIncremental(
       (streams in Assets).value.cacheDirectory / "run", sources) { srcs ⇒
       if (!srcs.isEmpty)
@@ -74,6 +77,6 @@ object SbtJade extends AutoPlugin {
   )
 
   override def projectSettings =
-    Seq(jade := (jade in Assets).value) ++
+    Seq(jade := (jade in Assets).value, jadePrettyPrint := true) ++
     inConfig(Assets)(baseSbtJadeSettings)
 }
