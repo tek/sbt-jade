@@ -11,6 +11,9 @@ import de.neuland.jade4j._
 
 object Import {
   val jade = TaskKey[Seq[File]]("jade", "Generate html files from jade")
+
+  val jadePrettyPrint = settingKey[Boolean]("Produces compressed HTML without unneeded whitespace if false.")
+
 }
 
 object SbtJade extends AutoPlugin {
@@ -33,14 +36,14 @@ object SbtJade extends AutoPlugin {
       (excludeFilter in jade in Assets).value)).get
     val config = new JadeConfiguration
     val model = new java.util.HashMap[String, Object]
-    config.setPrettyPrint(true)
+    config.setPrettyPrint(jadePrettyPrint.value)
     val results = incremental.syncIncremental(
       (streams in Assets).value.cacheDirectory / "run", sources) { srcs ⇒
       if (!srcs.isEmpty)
         streams.value.log.info(s"Processing ${srcs.size} $name source(s)")
       val targets = srcs map { src ⇒
         src.relativeTo(sourceDir) map { f ⇒
-          targetDir / f.toString.replaceFirst("\\.jade$", ".html")
+          targetDir / f.toString.replaceFirst("\\.jade$|\\.pug$", ".html")
         } map { f ⇒
           (f, config.renderTemplate(config.getTemplate(src.toString), model))
         } map { case (f, html) ⇒
@@ -65,15 +68,15 @@ object SbtJade extends AutoPlugin {
 
   val baseSbtJadeSettings = Seq(
     excludeFilter in jade := HiddenFileFilter,
-    includeFilter in jade := s"*.$name",
+    includeFilter in jade := s"*.jade" | "*.pug",
     managedResourceDirectories += (resourceManaged in jade in Assets).value,
     resourceManaged in jade in Assets := webTarget.value / name / "main",
-    resourceGenerators in Assets <+= jade in Assets,
+    resourceGenerators in Assets += jade in Assets,
     jade in Assets :=
       jadeTask.dependsOn(WebKeys.webModules in Assets).value
   )
 
   override def projectSettings =
-    Seq(jade := (jade in Assets).value) ++
+    Seq(jade := (jade in Assets).value, jadePrettyPrint := true) ++
     inConfig(Assets)(baseSbtJadeSettings)
 }
