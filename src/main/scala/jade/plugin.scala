@@ -1,13 +1,12 @@
 package jade
 
+import com.typesafe.sbt.web.{SbtWeb, incremental}
+import de.neuland.jade4j._
+import incremental._
 import sbt._
+
 import Keys._
 import Path.relativeTo
-
-import com.typesafe.sbt.web.{incremental, SbtWeb}
-import incremental._
-
-import de.neuland.jade4j._
 
 object Import {
   val jade = TaskKey[Seq[File]]("jade", "Generate html files from jade")
@@ -37,10 +36,11 @@ object SbtJade extends AutoPlugin {
     val config = new JadeConfiguration
     val model = new java.util.HashMap[String, Object]
     config.setPrettyPrint(jadePrettyPrint.value)
+    val log = streams.value.log
     val results = incremental.syncIncremental(
       (streams in Assets).value.cacheDirectory / "run", sources) { srcs ⇒
       if (!srcs.isEmpty)
-        streams.value.log.info(s"Processing ${srcs.size} $name source(s)")
+        log.info(s"Processing ${srcs.size} $name source(s)")
       val targets = srcs map { src ⇒
         src.relativeTo(sourceDir) map { f ⇒
           targetDir / f.toString.replaceFirst("\\.jade$|\\.pug$", ".html")
@@ -61,7 +61,7 @@ object SbtJade extends AutoPlugin {
     }
     val targets = results._2
     if(targets.length > 0)
-      streams.value.log.info(
+      log.info(
         s"$name compilation results: ${targets.mkString(", ")}")
     results._1.toSeq
   }
